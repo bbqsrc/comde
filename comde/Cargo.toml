@@ -10,6 +10,7 @@ phf = { version = "0.7.24", optional = true }
 xz2 = { version = "0.1.6", optional = true }
 snap = { version = "0.2", optional = true }
 flate2 = { version = "1.0.11", optional = true }
+zstd = { version = "0.4.28", optional = true }
 
 [dev-dependencies]
 
@@ -19,4 +20,5 @@ flate2 = { version = "1.0.11", optional = true }
 xz = ["xz2"]
 snappy = ["snap"]
 deflate = ["flate2"]
+zstandard = ["zstd"]
 with-phf = ["phf"]

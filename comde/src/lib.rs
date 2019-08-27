@@ -11,6 +11,9 @@ pub mod snappy;
 #[cfg(feature = "deflate")]
 pub mod deflate;
 
+#[cfg(feature = "zstandard")]
+pub mod zstd;
+
 #[cfg(feature = "with-phf")]
 pub mod phf;
 
