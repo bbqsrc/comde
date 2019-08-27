@@ -37,7 +37,7 @@ impl<V: Compress> Compressor<V> for ZstdCompressor {
 
     fn compress<D: Borrow<V>>(&self, data: D) -> Result<Vec<u8>, Box<dyn Error>> {
         let output = vec![];
-        let mut encoder = Encoder::new(output, 23)?;
+        let mut encoder = Encoder::new(output, 21)?;
         encoder.write(data.borrow().as_bytes())?;
         encoder.finish().map_err(|e| Box::new(e) as Box<dyn Error>)
     }
