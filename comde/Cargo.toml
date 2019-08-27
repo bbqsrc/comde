@@ -3,6 +3,8 @@ name = "comde"
 version = "0.0.0"
 authors = ["Brendan Molloy <brendan@bbqsrc.net>"]
 edition = "2018"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/bbqsrc/comde"
 
 [dependencies]
 delegate = "0.2.0"
@@ -11,10 +13,6 @@ xz2 = { version = "0.1.6", optional = true }
 snap = { version = "0.2", optional = true }
 flate2 = { version = "1.0.11", optional = true }
 zstd = { version = "0.4.28", optional = true }
-
-[dev-dependencies]
-
-[build-dependencies]
 
 [features]
 xz = ["xz2"]

@@ -3,6 +3,8 @@ name = "comde_codegen"
 version = "0.0.0"
 authors = ["Brendan Molloy <brendan@bbqsrc.net>"]
 edition = "2018"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/bbqsrc/comde"
 
 [dependencies]
 comde = { path = "../comde" }
@@ -11,11 +13,8 @@ phf_codegen = { git = "https://github.com/sfackler/rust-phf" }
 byte_string = "1.0.0"
 delegate = "0.2.0"
 
-[dev-dependencies]
-
-[build-dependencies]
-
 [features]
 xz = ["comde/xz"]
 snappy = ["comde/snappy"]
 deflate = ["comde/deflate"]
+zstandard = ["comde/zstandard"]
