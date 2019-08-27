@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, hash_map::RandomState};
 use std::hash::Hash;
+use std::borrow::Borrow;
 
 use delegate::delegate;
 
@@ -17,9 +18,6 @@ where
     #[doc(hidden)]
     __value: std::marker::PhantomData<V>,
 }
-
-use std::borrow::Borrow;
-use std::collections::hash_map::RandomState;
 
 impl<K: Hash + Eq, V, C, D> CompressedHashMap<K, V, RandomState, C, D>
 where

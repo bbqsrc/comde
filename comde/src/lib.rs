@@ -3,13 +3,16 @@ pub mod de;
 pub mod hash_map;
 
 #[cfg(feature = "xz")]
-pub mod xz2;
+pub mod xz;
 
 #[cfg(feature = "snappy")]
 pub mod snappy;
 
 #[cfg(feature = "deflate")]
 pub mod deflate;
+
+#[cfg(feature = "with-phf")]
+pub mod phf;
 
 pub use com::{Compress, Compressor};
 pub use de::{Decompress, Decompressor};
