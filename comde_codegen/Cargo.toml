@@ -2,6 +2,7 @@
 name = "comde_codegen"
 version = "0.0.0"
 authors = ["Brendan Molloy <brendan@bbqsrc.net>"]
+description = "Compression/decompression akin to serde (codegen)"
 edition = "2018"
 license = "Apache-2.0 OR MIT"
 repository = "https://github.com/bbqsrc/comde"
