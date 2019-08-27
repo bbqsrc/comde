@@ -1,50 +1,57 @@
-use delegate::delegate;
-use phf::{PhfHash, map::Map};
+use std::borrow::Borrow;
 
-use crate::{Compress, Compressor, Decompress, Decompressor};
+use phf::{map::Map, PhfHash};
 
+use crate::{Decompress, Decompressor};
 
-pub struct CompressedPhfMap<K, V, C, D>
+pub struct CompressedPhfMap<K, V, D>
 where
     K: 'static,
-    V: Compress + Decompress,
-    C: Compressor<V>,
+    V: Decompress,
     D: Decompressor<V>,
 {
     #[doc(hidden)]
     pub map: Map<K, &'static [u8]>,
     #[doc(hidden)]
-    pub compressor: C,
-    #[doc(hidden)]
-    pub decompressor: D,
-    #[doc(hidden)]
-    pub __value: std::marker::PhantomData<V>,
+    pub value_ty: std::marker::PhantomData<V>,
+    pub decompressor_ty: std::marker::PhantomData<D>,
 }
 
-impl<K: PhfHash + Eq, V, C, D> CompressedPhfMap<K, V, C, D>
+impl<K: PhfHash + Eq, V, D> CompressedPhfMap<K, V, D>
 where
-    V: Compress + Decompress,
-    C: Compressor<V>,
+    V: Decompress,
     D: Decompressor<V>,
 {
-    // pub const fn new(map: Map<K, &'static [u8]>) -> CompressedPhfMap<K, V, C, D> {
-    //     CompressedPhfMap {
-    //         map,
-    //         compressor: C::new(),
-    //         decompressor: D::new(),
-    //         __value: std::marker::PhantomData::<V>,
-    //     }
-    // }
+    pub fn get<T: ?Sized>(&self, key: &T) -> Option<V>
+    where
+        T: Eq + PhfHash,
+        K: Borrow<T>,
+    {
+        self.map
+            .get(key)
+            .map(|value| D::new().decompress(value).unwrap())
+    }
 }
 
-#[macro_export]
-macro_rules! compressed_phf_map {
-    ($compressor:tt, $decompressor:tt, $V:tt, $map:expr) => {
-        CompressedPhfMap {
-            map: $map,
-            compressor: $compressor,
-            decompressor: $decompressor,
-            __value: std::marker::PhantomData::<$V>,
-        }
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn basic() {
+        let phf_map = crate::phf::CompressedPhfMap {
+            map: ::phf::Map {
+                key: 3213172566270843353,
+                disps: ::phf::Slice::Static(&[
+                    (0, 0),
+                ]),
+                entries: ::phf::Slice::Static(&[
+                    ("boop", b"(\xb5/\xfd\x00\x80\r\x01\x00\xb0this is a stringindeed\x03\x00^\xd5\xba\xea\x05\x8a,K"),
+                ]),
+            },
+            decompressor_ty: std::marker::PhantomData::<crate::zstd::ZstdDecompressor>,
+            value_ty: std::marker::PhantomData::<String>
+        };
+        let result = phf_map.get("boop");
+        println!("{:?}", result);
+        assert_eq!(Some("this is a string string string string string string this is indeed a string string string".to_string()), result);
     }
 }

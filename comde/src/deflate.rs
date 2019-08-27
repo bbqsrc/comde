@@ -6,11 +6,12 @@ use std::io::prelude::*;
 use crate::hash_map::CompressedHashMap;
 use crate::{Compress, Compressor, Decompress, Decompressor};
 
-use flate2::Compression;
-use flate2::write::DeflateEncoder;
 use flate2::read::DeflateDecoder;
+use flate2::write::DeflateEncoder;
+use flate2::Compression;
 
-pub type DeflateHashMap<K, V> = CompressedHashMap<K, V, RandomState, DeflateCompressor, DeflateDecompressor>;
+pub type DeflateHashMap<K, V> =
+    CompressedHashMap<K, V, RandomState, DeflateCompressor, DeflateDecompressor>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct DeflateDecompressor;

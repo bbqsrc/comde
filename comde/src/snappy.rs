@@ -6,7 +6,8 @@ use std::io::prelude::*;
 use crate::hash_map::CompressedHashMap;
 use crate::{Compress, Compressor, Decompress, Decompressor};
 
-pub type SnappyHashMap<K, V> = CompressedHashMap<K, V, RandomState, SnappyCompressor, SnappyDecompressor>;
+pub type SnappyHashMap<K, V> =
+    CompressedHashMap<K, V, RandomState, SnappyCompressor, SnappyDecompressor>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct SnappyDecompressor;
@@ -36,7 +37,9 @@ impl<V: Compress> Compressor<V> for SnappyCompressor {
         let output = vec![];
         let mut encoder = snap::Writer::new(output);
         encoder.write(data.borrow().as_bytes())?;
-        encoder.into_inner().map_err(|e| Box::new(e) as Box<dyn Error>)
+        encoder
+            .into_inner()
+            .map_err(|e| Box::new(e) as Box<dyn Error>)
     }
 }
 

@@ -3,8 +3,8 @@ use std::collections::hash_map::RandomState;
 use std::error::Error;
 use std::io::prelude::*;
 
-use zstd::stream::write::Encoder;
 use zstd::stream::read::Decoder;
+use zstd::stream::write::Encoder;
 
 use crate::hash_map::CompressedHashMap;
 use crate::{Compress, Compressor, Decompress, Decompressor};

@@ -12,8 +12,9 @@ use crate::{Compress, Compressor, Decompress, Decompressor};
 use crate::phf::CompressedPhfMap;
 
 pub type XzHashMap<K, V> = CompressedHashMap<K, V, RandomState, XzCompressor, XzDecompressor>;
+
 #[cfg(feature = "with-phf")]
-pub type XzPhfMap<K, V> = CompressedPhfMap<K, V, XzCompressor, XzDecompressor>;
+pub type XzPhfMap<K, V> = CompressedPhfMap<K, V, XzCompressor>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct XzDecompressor;
@@ -64,7 +65,5 @@ mod tests {
 
     #[test]
     #[cfg(feature = "with-phf")]
-    fn with_phf() {
-        
-    }
+    fn with_phf() {}
 }

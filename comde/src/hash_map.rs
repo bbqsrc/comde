@@ -1,6 +1,6 @@
-use std::collections::{HashMap, hash_map::RandomState};
-use std::hash::Hash;
 use std::borrow::Borrow;
+use std::collections::{hash_map::RandomState, HashMap};
+use std::hash::Hash;
 
 use delegate::delegate;
 

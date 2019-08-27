@@ -1,47 +1,84 @@
-use std::hash::Hash;
 use std::fmt::Debug;
+use std::hash::Hash;
 
 use std::io::prelude::*;
 use std::io::{Cursor, Write};
 
 use byte_string::ByteString;
-use phf_shared::PhfHash;
 use delegate::delegate;
+use phf_shared::PhfHash;
 
 use comde::{Compress, Compressor};
 
 #[cfg(feature = "xz")]
 pub type XzMap<K, V> = Map<K, V, comde::xz::XzCompressor>;
 
+#[cfg(feature = "xz")]
+#[macro_export]
+macro_rules! xz_map {
+    ($ty:ty) => {
+        XzMap::new("::comde::xz::XzDecompressor", stringify!($ty))
+    };
+}
+
 #[cfg(feature = "deflate")]
 pub type DeflateMap<K, V> = Map<K, V, comde::deflate::DeflateCompressor>;
+
+#[cfg(feature = "deflate")]
+#[macro_export]
+macro_rules! deflate_map {
+    ($ty:ty) => {
+        SnappyMap::new("::comde::deflate::DeflateDecompressor", stringify!($ty))
+    };
+}
 
 #[cfg(feature = "snappy")]
 pub type SnappyMap<K, V> = Map<K, V, comde::snappy::SnappyCompressor>;
 
+#[cfg(feature = "snappy")]
+#[macro_export]
+macro_rules! snappy_map {
+    ($ty:ty) => {
+        SnappyMap::new("::comde::snappy::SnappyDecompressor", stringify!($ty))
+    };
+}
+
 #[cfg(feature = "zstandard")]
 pub type ZstdMap<K, V> = Map<K, V, comde::zstd::ZstdCompressor>;
 
-pub struct Map<K, V, C>
-where
-    V: Compress,
-    C: Compressor<V>
-{
-    map: phf_codegen::Map<K>,
-    compressor: C,
-    #[doc(hidden)]
-    __value: std::marker::PhantomData<V>,
+#[cfg(feature = "zstandard")]
+#[macro_export]
+macro_rules! zstd_map {
+    ($ty:ty) => {
+        ZstdMap::new("::comde::zstd::ZstdDecompressor", stringify!($ty))
+    };
 }
 
-impl<K: Hash + PhfHash + Eq + Debug, V, C> Map<K, V, C>
+pub struct Map<K, V, C>
 where
+    K: Hash + PhfHash + Eq + Debug,
     V: Compress,
     C: Compressor<V>,
 {
-    pub fn new() -> Map<K, V, C> {
+    map: phf_codegen::Map<K>,
+    compressor: C,
+    decompressor_type: &'static str,
+    value_type: &'static str,
+    __value: std::marker::PhantomData<V>,
+}
+
+impl<K, V, C> Map<K, V, C>
+where
+    K: Hash + PhfHash + Eq + Debug,
+    V: Compress,
+    C: Compressor<V>,
+{
+    pub fn new(decompressor_type: &'static str, value_type: &'static str) -> Map<K, V, C> {
         Map {
             map: phf_codegen::Map::new(),
             compressor: C::new(),
+            decompressor_type,
+            value_type,
             __value: std::marker::PhantomData::<V>,
         }
     }
@@ -49,7 +86,8 @@ where
     #[inline]
     pub fn entry(&mut self, key: K, value: V) -> &mut Map<K, V, C> {
         let bytes = self.compressor.compress(value).unwrap();
-        self.map.entry(key, &format!("{:?}", ByteString::new(bytes)));
+        self.map
+            .entry(key, &format!("{:?}", ByteString::new(bytes)));
         self
     }
 
@@ -59,10 +97,16 @@ where
         self
     }
 
-    delegate! {
-        target self.map {
-            pub fn build<W: Write>(&self, w: &mut W) -> std::io::Result<()>;
-        }
+    #[inline]
+    pub fn build<W: Write>(&self, w: &mut W) -> std::io::Result<()> {
+        w.write(b"::comde::phf::CompressedPhfMap {\n    map: ")?;
+        self.map.build(w)?;
+        w.write(b",\n    decompressor_ty: std::marker::PhantomData::<")?;
+        w.write(self.decompressor_type.as_bytes())?;
+        w.write(b">,\n    value_ty: std::marker::PhantomData::<")?;
+        w.write(self.value_type.as_bytes())?;
+        w.write(b">\n}\n")?;
+        Ok(())
     }
 }
 
@@ -73,7 +117,7 @@ mod tests {
     #[test]
     #[cfg(feature = "snappy")]
     fn basic_snappy() {
-        let mut map = SnappyMap::new();
+        let mut map = snappy_map!(String);
 
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
@@ -85,7 +129,7 @@ mod tests {
     #[test]
     #[cfg(feature = "xz")]
     fn basic_xz() {
-        let mut map = XzMap::new();
+        let mut map = xz_map!(String);
 
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
@@ -97,7 +141,7 @@ mod tests {
     #[test]
     #[cfg(feature = "deflate")]
     fn basic_deflate() {
-        let mut map = DeflateMap::new();
+        let mut map = deflate_map!(String);
 
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
@@ -109,7 +153,7 @@ mod tests {
     #[test]
     #[cfg(feature = "zstandard")]
     fn basic_zstd() {
-        let mut map = ZstdMap::new();
+        let mut map = zstd_map!(String);
 
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
