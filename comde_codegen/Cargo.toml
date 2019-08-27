@@ -8,9 +8,9 @@ license = "Apache-2.0 OR MIT"
 repository = "https://github.com/bbqsrc/comde"
 
 [dependencies]
-comde = { path = "../comde" }
-phf_shared = { git = "https://github.com/sfackler/rust-phf" }
-phf_codegen = { git = "https://github.com/sfackler/rust-phf" }
+comde = { version = "0.0.0", path = "../comde" }
+phf_shared = "0.7.24"
+phf_codegen = "0.7.24"
 byte_string = "1.0.0"
 delegate = "0.2.0"
 

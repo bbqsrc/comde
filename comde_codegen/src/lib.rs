@@ -1,7 +1,11 @@
 use std::hash::Hash;
+use std::fmt::Debug;
+
+use std::io::prelude::*;
+use std::io::{Cursor, Write};
 
 use byte_string::ByteString;
-use phf_shared::{PhfHash, FmtConst};
+use phf_shared::PhfHash;
 use delegate::delegate;
 
 use comde::{Compress, Compressor};
@@ -29,7 +33,7 @@ where
     __value: std::marker::PhantomData<V>,
 }
 
-impl<K: Hash + PhfHash + Eq + FmtConst, V, C> Map<K, V, C>
+impl<K: Hash + PhfHash + Eq + Debug, V, C> Map<K, V, C>
 where
     V: Compress,
     C: Compressor<V>,
@@ -57,7 +61,7 @@ where
 
     delegate! {
         target self.map {
-            pub fn build(&self) -> phf_codegen::DisplayMap<K>;
+            pub fn build<W: Write>(&self, w: &mut W) -> std::io::Result<()>;
         }
     }
 }
@@ -73,8 +77,9 @@ mod tests {
 
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
-        let out = map.build();
-        println!("snappy: {}", out);
+        let mut out = Cursor::new(vec![]);
+        map.build(&mut out).unwrap();
+        println!("snappy: {}", String::from_utf8(out.into_inner()).unwrap());
     }
 
     #[test]
@@ -84,8 +89,9 @@ mod tests {
 
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
-        let out = map.build();
-        println!("xz: {}", out);
+        let mut out = Cursor::new(vec![]);
+        map.build(&mut out).unwrap();
+        println!("xz: {}", String::from_utf8(out.into_inner()).unwrap());
     }
 
     #[test]
@@ -95,8 +101,9 @@ mod tests {
 
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
-        let out = map.build();
-        println!("deflate: {}", out);
+        let mut out = Cursor::new(vec![]);
+        map.build(&mut out).unwrap();
+        println!("deflate: {}", String::from_utf8(out.into_inner()).unwrap());
     }
 
     #[test]
@@ -106,7 +113,8 @@ mod tests {
 
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
-        let out = map.build();
-        println!("zstd: {}", out);
+        let mut out = Cursor::new(vec![]);
+        map.build(&mut out).unwrap();
+        println!("zstd: {}", String::from_utf8(out.into_inner()).unwrap());
     }
 }
