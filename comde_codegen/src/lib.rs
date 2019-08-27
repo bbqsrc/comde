@@ -15,6 +15,9 @@ pub type DeflateMap<K, V> = Map<K, V, comde::deflate::DeflateCompressor>;
 #[cfg(feature = "snappy")]
 pub type SnappyMap<K, V> = Map<K, V, comde::snappy::SnappyCompressor>;
 
+#[cfg(feature = "zstandard")]
+pub type ZstdMap<K, V> = Map<K, V, comde::zstd::ZstdCompressor>;
+
 pub struct Map<K, V, C>
 where
     V: Compress,
@@ -71,7 +74,7 @@ mod tests {
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
         let out = map.build();
-        println!("{}", out);
+        println!("snappy: {}", out);
     }
 
     #[test]
@@ -82,6 +85,28 @@ mod tests {
         map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
 
         let out = map.build();
-        println!("{}", out);
+        println!("xz: {}", out);
+    }
+
+    #[test]
+    #[cfg(feature = "deflate")]
+    fn basic_deflate() {
+        let mut map = DeflateMap::new();
+
+        map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
+
+        let out = map.build();
+        println!("deflate: {}", out);
+    }
+
+    #[test]
+    #[cfg(feature = "zstandard")]
+    fn basic_zstd() {
+        let mut map = ZstdMap::new();
+
+        map.entry("boop", "this is a string string string string string string this is indeed a string string string".to_string());
+
+        let out = map.build();
+        println!("zstd: {}", out);
     }
 }
