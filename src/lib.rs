@@ -5,6 +5,9 @@ pub mod hash_map;
 #[cfg(feature = "xz")]
 pub mod xz2;
 
+#[cfg(feature = "snappy")]
+pub mod snappy;
+
 pub use com::{Compress, Compressor};
 pub use de::{Decompress, Decompressor};
 pub use hash_map::CompressedHashMap;

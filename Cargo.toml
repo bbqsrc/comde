@@ -7,8 +7,10 @@ edition = "2018"
 [dependencies]
 delegate = "0.2.0"
 xz2 = { version = "0.1.6", optional = true }
+snap = { version = "0.2", optional = true }
 
 [dev-dependencies]
 
 [features]
 xz = ["xz2"]
+snappy = ["snap"]
