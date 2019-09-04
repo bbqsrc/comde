@@ -29,7 +29,7 @@ where
     {
         self.map
             .get(key)
-            .map(|value| D::new().decompress(value).unwrap())
+            .map(|value| D::new().from_reader(std::io::Cursor::new(value)).unwrap())
     }
 }
 

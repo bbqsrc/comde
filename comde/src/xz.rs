@@ -1,7 +1,6 @@
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
-use std::error::Error;
-use std::io::{prelude::*, BufWriter};
+use std::io::{prelude::*, BufWriter, Result};
 
 use xz2::{read::XzDecoder, write::XzEncoder};
 
@@ -24,11 +23,12 @@ impl<V: Decompress> Decompressor<V> for XzDecompressor {
         XzDecompressor
     }
 
-    fn decompress(&self, data: &[u8]) -> Result<V, Box<dyn Error>> {
-        let mut buffer = vec![];
-        let mut decoder = XzDecoder::new(data);
-        decoder.read_to_end(&mut buffer)?;
-        V::from_bytes(buffer)
+    fn from_reader<R: Read>(&self, reader: R) -> Result<V>
+    where
+        Self: Sized,
+    {
+        let mut decoder = XzDecoder::new(reader);
+        V::from_reader(decoder)
     }
 }
 
@@ -40,14 +40,11 @@ impl<V: Compress> Compressor<V> for XzCompressor {
         XzCompressor
     }
 
-    fn compress<D: Borrow<V>>(&self, data: D) -> Result<Vec<u8>, Box<dyn Error>> {
-        let output = BufWriter::new(vec![]);
-        let mut encoder = XzEncoder::new(output, 9);
-        encoder.write(data.borrow().as_bytes())?;
-        encoder
-            .finish()
-            .map(|x| x.into_inner().unwrap())
-            .map_err(|e| Box::new(e) as Box<dyn Error>)
+    fn compress<W: Write>(&self, writer: W, data: V) -> Result<()> {
+        let mut encoder = XzEncoder::new(writer, 9);
+        std::io::copy(&mut data.to_reader(), &mut encoder)?;
+        encoder.finish()?;
+        Ok(())
     }
 }
 

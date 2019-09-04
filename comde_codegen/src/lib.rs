@@ -85,7 +85,7 @@ where
 
     #[inline]
     pub fn entry(&mut self, key: K, value: V) -> &mut Map<K, V, C> {
-        let bytes = self.compressor.compress(value).unwrap();
+        let bytes = self.compressor.to_vec(value).unwrap();
         self.map
             .entry(key, &format!("{:?}", ByteString::new(bytes)));
         self

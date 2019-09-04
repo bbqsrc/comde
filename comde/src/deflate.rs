@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
 use std::error::Error;
-use std::io::prelude::*;
+use std::io::{prelude::*, Result};
 
 use crate::hash_map::CompressedHashMap;
 use crate::{Compress, Compressor, Decompress, Decompressor};
@@ -21,11 +21,12 @@ impl<V: Decompress> Decompressor<V> for DeflateDecompressor {
         DeflateDecompressor
     }
 
-    fn decompress(&self, data: &[u8]) -> Result<V, Box<dyn Error>> {
-        let mut buffer = vec![];
-        let mut decoder = DeflateDecoder::new(data);
-        decoder.read_to_end(&mut buffer)?;
-        V::from_bytes(buffer)
+    fn from_reader<R: Read>(&self, reader: R) -> Result<V>
+    where
+        Self: Sized,
+    {
+        let mut decoder = DeflateDecoder::new(reader);
+        V::from_reader(decoder)
     }
 }
 
@@ -37,10 +38,11 @@ impl<V: Compress> Compressor<V> for DeflateCompressor {
         DeflateCompressor
     }
 
-    fn compress<D: Borrow<V>>(&self, data: D) -> Result<Vec<u8>, Box<dyn Error>> {
-        let mut encoder = DeflateEncoder::new(Vec::new(), Compression::default());
-        encoder.write(data.borrow().as_bytes())?;
-        encoder.finish().map_err(|e| Box::new(e) as Box<dyn Error>)
+    fn compress<W: Write>(&self, writer: W, data: V) -> Result<()> {
+        let mut encoder = DeflateEncoder::new(writer, Compression::default());
+        std::io::copy(&mut data.to_reader(), &mut encoder)?;
+        encoder.finish()?;
+        Ok(())
     }
 }
 

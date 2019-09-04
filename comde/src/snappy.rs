@@ -1,7 +1,6 @@
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
-use std::error::Error;
-use std::io::prelude::*;
+use std::io::{prelude::*, Result};
 
 use crate::hash_map::CompressedHashMap;
 use crate::{Compress, Compressor, Decompress, Decompressor};
@@ -17,11 +16,12 @@ impl<V: Decompress> Decompressor<V> for SnappyDecompressor {
         SnappyDecompressor
     }
 
-    fn decompress(&self, data: &[u8]) -> Result<V, Box<dyn Error>> {
-        let mut buffer = vec![];
-        let mut decoder = snap::Reader::new(data);
-        decoder.read_to_end(&mut buffer)?;
-        V::from_bytes(buffer)
+    fn from_reader<R: Read>(&self, reader: R) -> Result<V>
+    where
+        Self: Sized,
+    {
+        let mut decoder = snap::Reader::new(reader);
+        V::from_reader(decoder)
     }
 }
 
@@ -33,13 +33,10 @@ impl<V: Compress> Compressor<V> for SnappyCompressor {
         SnappyCompressor
     }
 
-    fn compress<D: Borrow<V>>(&self, data: D) -> Result<Vec<u8>, Box<dyn Error>> {
-        let output = vec![];
-        let mut encoder = snap::Writer::new(output);
-        encoder.write(data.borrow().as_bytes())?;
-        encoder
-            .into_inner()
-            .map_err(|e| Box::new(e) as Box<dyn Error>)
+    fn compress<W: Write>(&self, writer: W, data: V) -> Result<()> {
+        let mut encoder = snap::Writer::new(writer);
+        std::io::copy(&mut data.to_reader(), &mut encoder);
+        Ok(())
     }
 }
 

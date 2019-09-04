@@ -36,10 +36,11 @@ where
 
     #[inline(always)]
     pub fn insert(&mut self, k: K, v: V) -> Option<V> {
-        let bytes = self.compressor.compress(v).unwrap();
+        let bytes = self.compressor.to_vec(v).unwrap();
         self.map
             .insert(k, bytes)
-            .map(|x| self.decompressor.decompress(&*x).unwrap())
+            // This isn't actually insane.
+            .map(|x| self.decompressor.from_reader(x.to_reader()).unwrap())
     }
 
     #[inline(always)]
@@ -48,9 +49,10 @@ where
         K: Borrow<Q>,
         Q: Hash + Eq,
     {
-        self.map
-            .get(k)
-            .map(|x| self.decompressor.decompress(&*x).unwrap())
+        self.map.get(k).map(|x| {
+            let cursor = std::io::Cursor::new(x);
+            self.decompressor.from_reader(cursor).unwrap()
+        })
     }
 
     delegate! {
