@@ -2,6 +2,8 @@ pub mod com;
 pub mod de;
 pub mod hash_map;
 
+pub mod stored;
+
 #[cfg(feature = "xz")]
 pub mod xz;
 
@@ -17,6 +19,6 @@ pub mod zstd;
 #[cfg(feature = "with-phf")]
 pub mod phf;
 
-pub use com::{Compress, Compressor};
+pub use com::{Compress, Compressor, ByteCount};
 pub use de::{Decompress, Decompressor};
 pub use hash_map::CompressedHashMap;

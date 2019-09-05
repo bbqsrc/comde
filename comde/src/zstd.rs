@@ -1,30 +1,27 @@
-use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
-use std::error::Error;
-use std::io::prelude::*;
-use std::io::Result;
+use std::io::{Result, Seek, SeekFrom, prelude::*};
 
 use zstd::stream::read::Decoder;
 use zstd::stream::write::Encoder;
 
 use crate::hash_map::CompressedHashMap;
-use crate::{Compress, Compressor, Decompress, Decompressor};
+use crate::{Compress, Compressor, Decompress, Decompressor, com::ByteCount};
 
 pub type ZstdHashMap<K, V> = CompressedHashMap<K, V, RandomState, ZstdCompressor, ZstdDecompressor>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct ZstdDecompressor;
 
-impl<V: Decompress> Decompressor<V> for ZstdDecompressor {
+impl Decompressor for ZstdDecompressor {
     fn new() -> Self {
         ZstdDecompressor
     }
 
-    fn from_reader<R: Read>(&self, reader: R) -> Result<V>
+    fn from_reader<R: Read, V: Decompress>(&self, reader: R) -> Result<V>
     where
         Self: Sized,
     {
-        let mut decoder = Decoder::new(reader)?;
+        let decoder = Decoder::new(reader)?;
         V::from_reader(decoder)
     }
 }
@@ -32,16 +29,19 @@ impl<V: Decompress> Decompressor<V> for ZstdDecompressor {
 #[derive(Debug, Copy, Clone)]
 pub struct ZstdCompressor;
 
-impl<V: Compress> Compressor<V> for ZstdCompressor {
+impl Compressor for ZstdCompressor {
     fn new() -> Self {
         ZstdCompressor
     }
 
-    fn compress<W: Write>(&self, writer: W, data: V) -> Result<()> {
+    fn compress<W: Write + Seek, V: Compress>(&self, mut writer: W, data: V) -> Result<ByteCount> {
+        let start = writer.seek(SeekFrom::Current(0))?;
         let mut encoder = Encoder::new(writer, 21)?;
-        std::io::copy(&mut data.to_reader(), &mut encoder)?;
-        encoder.finish()?;
-        Ok(())
+        let read = std::io::copy(&mut data.to_reader(), &mut encoder)?;
+        let mut writer = encoder.finish()?;
+        let end = writer.seek(SeekFrom::Current(0))?;
+        let write = end - start;
+        Ok(ByteCount { read, write })
     }
 }
 

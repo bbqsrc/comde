@@ -1,19 +1,16 @@
 use std::io::{Read, Result};
 
-pub trait Decompressor<V>
-where
-    V: Decompress,
-{
+pub trait Decompressor {
     fn new() -> Self;
-    fn from_reader<R: Read>(&self, reader: R) -> Result<V>
+    fn from_reader<R: Read, V: Decompress>(&self, reader: R) -> Result<V>
     where
         Self: Sized;
 
-    fn from_vec(&self, bytes: Vec<u8>) -> Result<V>
+    fn from_vec<V: Decompress>(&self, bytes: Vec<u8>) -> Result<V>
     where
         Self: Sized,
     {
-        let mut reader = std::io::Cursor::new(bytes);
+        let reader = std::io::Cursor::new(bytes);
         self.from_reader(reader)
     }
 }
@@ -27,7 +24,7 @@ pub trait Decompress {
     where
         Self: Sized,
     {
-        let mut reader = std::io::Cursor::new(bytes);
+        let reader = std::io::Cursor::new(bytes);
         Self::from_reader(reader)
     }
 }

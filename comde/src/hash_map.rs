@@ -9,8 +9,8 @@ use crate::{Compress, Compressor, Decompress, Decompressor};
 pub struct CompressedHashMap<K, V, R, C, D>
 where
     V: Compress + Decompress,
-    C: Compressor<V>,
-    D: Decompressor<V>,
+    C: Compressor,
+    D: Decompressor,
 {
     map: HashMap<K, Vec<u8>, R>,
     compressor: C,
@@ -22,8 +22,8 @@ where
 impl<K: Hash + Eq, V, C, D> CompressedHashMap<K, V, RandomState, C, D>
 where
     V: Compress + Decompress,
-    C: Compressor<V>,
-    D: Decompressor<V>,
+    C: Compressor,
+    D: Decompressor,
 {
     pub fn new() -> CompressedHashMap<K, V, RandomState, C, D> {
         CompressedHashMap {

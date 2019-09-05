@@ -8,7 +8,7 @@ pub struct CompressedPhfMap<K, V, D>
 where
     K: 'static,
     V: Decompress,
-    D: Decompressor<V>,
+    D: Decompressor,
 {
     #[doc(hidden)]
     pub map: Map<K, &'static [u8]>,
@@ -20,7 +20,7 @@ where
 impl<K: PhfHash + Eq, V, D> CompressedPhfMap<K, V, D>
 where
     V: Decompress,
-    D: Decompressor<V>,
+    D: Decompressor,
 {
     pub fn get<T: ?Sized>(&self, key: &T) -> Option<V>
     where

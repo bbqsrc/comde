@@ -1,11 +1,10 @@
-use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
-use std::io::{prelude::*, BufWriter, Result};
+use std::io::{prelude::*, Result, Seek, SeekFrom};
 
 use xz2::{read::XzDecoder, write::XzEncoder};
 
 use crate::hash_map::CompressedHashMap;
-use crate::{Compress, Compressor, Decompress, Decompressor};
+use crate::{Compress, Compressor, Decompress, Decompressor, com::ByteCount};
 
 #[cfg(feature = "with-phf")]
 use crate::phf::CompressedPhfMap;
@@ -18,16 +17,16 @@ pub type XzPhfMap<K, V> = CompressedPhfMap<K, V, XzCompressor>;
 #[derive(Debug, Copy, Clone)]
 pub struct XzDecompressor;
 
-impl<V: Decompress> Decompressor<V> for XzDecompressor {
+impl Decompressor for XzDecompressor {
     fn new() -> Self {
         XzDecompressor
     }
 
-    fn from_reader<R: Read>(&self, reader: R) -> Result<V>
+    fn from_reader<R: Read, V: Decompress>(&self, reader: R) -> Result<V>
     where
         Self: Sized,
     {
-        let mut decoder = XzDecoder::new(reader);
+        let decoder = XzDecoder::new(reader);
         V::from_reader(decoder)
     }
 }
@@ -35,16 +34,17 @@ impl<V: Decompress> Decompressor<V> for XzDecompressor {
 #[derive(Debug, Copy, Clone)]
 pub struct XzCompressor;
 
-impl<V: Compress> Compressor<V> for XzCompressor {
+impl Compressor for XzCompressor {
     fn new() -> Self {
         XzCompressor
     }
 
-    fn compress<W: Write>(&self, writer: W, data: V) -> Result<()> {
+    fn compress<W: Write + Seek, V: Compress>(&self, mut writer: W, data: V) -> Result<ByteCount> {
+        let start = writer.seek(SeekFrom::Current(0))?;
         let mut encoder = XzEncoder::new(writer, 9);
-        std::io::copy(&mut data.to_reader(), &mut encoder)?;
-        encoder.finish()?;
-        Ok(())
+        let read = std::io::copy(&mut data.to_reader(), &mut encoder)?;
+        let end = encoder.finish()?.seek(SeekFrom::Current(0))?;
+        Ok(ByteCount { read, write: end - start })
     }
 }
 

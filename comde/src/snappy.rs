@@ -1,9 +1,8 @@
-use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
-use std::io::{prelude::*, Result};
+use std::io::{prelude::*, Result, Seek, SeekFrom};
 
 use crate::hash_map::CompressedHashMap;
-use crate::{Compress, Compressor, Decompress, Decompressor};
+use crate::{Compress, Compressor, Decompress, Decompressor, com::ByteCount};
 
 pub type SnappyHashMap<K, V> =
     CompressedHashMap<K, V, RandomState, SnappyCompressor, SnappyDecompressor>;
@@ -11,16 +10,16 @@ pub type SnappyHashMap<K, V> =
 #[derive(Debug, Copy, Clone)]
 pub struct SnappyDecompressor;
 
-impl<V: Decompress> Decompressor<V> for SnappyDecompressor {
+impl Decompressor for SnappyDecompressor {
     fn new() -> Self {
         SnappyDecompressor
     }
 
-    fn from_reader<R: Read>(&self, reader: R) -> Result<V>
+    fn from_reader<R: Read, V: Decompress>(&self, reader: R) -> Result<V>
     where
         Self: Sized,
     {
-        let mut decoder = snap::Reader::new(reader);
+        let decoder = snap::Reader::new(reader);
         V::from_reader(decoder)
     }
 }
@@ -28,15 +27,18 @@ impl<V: Decompress> Decompressor<V> for SnappyDecompressor {
 #[derive(Debug, Copy, Clone)]
 pub struct SnappyCompressor;
 
-impl<V: Compress> Compressor<V> for SnappyCompressor {
+impl Compressor for SnappyCompressor {
     fn new() -> Self {
         SnappyCompressor
     }
 
-    fn compress<W: Write>(&self, writer: W, data: V) -> Result<()> {
+    fn compress<W: Write + Seek, V: Compress>(&self, mut writer: W, data: V) -> Result<ByteCount> {
+        let start = writer.seek(SeekFrom::Current(0))?;
         let mut encoder = snap::Writer::new(writer);
-        std::io::copy(&mut data.to_reader(), &mut encoder);
-        Ok(())
+        let read = std::io::copy(&mut data.to_reader(), &mut encoder)?;
+        let mut writer = encoder.into_inner().map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "failed to get writer out of encoder"))?;
+        let end = writer.seek(SeekFrom::Current(0))?;
+        Ok(ByteCount { read, write: end - start })
     }
 }
 
