@@ -46,3 +46,12 @@ impl<'a> Compress for &'a Vec<u8> {
         std::io::Cursor::new(self)
     }
 }
+
+impl Compress for std::fs::File {
+    type Reader = std::fs::File;
+
+    fn to_reader(self) -> Self::Reader {
+        self
+    }
+}
+

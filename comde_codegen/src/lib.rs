@@ -1,11 +1,8 @@
 use std::fmt::Debug;
 use std::hash::Hash;
-
-use std::io::prelude::*;
-use std::io::{Cursor, Write};
+use std::io::Write;
 
 use byte_string::ByteString;
-use delegate::delegate;
 use phf_shared::PhfHash;
 
 use comde::{Compress, Compressor};
@@ -58,7 +55,7 @@ pub struct Map<K, V, C>
 where
     K: Hash + PhfHash + Eq + Debug,
     V: Compress,
-    C: Compressor<V>,
+    C: Compressor,
 {
     map: phf_codegen::Map<K>,
     compressor: C,
@@ -71,7 +68,7 @@ impl<K, V, C> Map<K, V, C>
 where
     K: Hash + PhfHash + Eq + Debug,
     V: Compress,
-    C: Compressor<V>,
+    C: Compressor,
 {
     pub fn new(decompressor_type: &'static str, value_type: &'static str) -> Map<K, V, C> {
         Map {
@@ -113,6 +110,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Cursor;
 
     #[test]
     #[cfg(feature = "snappy")]

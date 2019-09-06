@@ -1,7 +1,10 @@
-use std::io::{Read, Result};
+use std::io::{Read, Write, Result};
 
 pub trait Decompressor {
     fn new() -> Self;
+
+    fn copy<R: Read, W: Write>(&self, source: R, dest: W) -> Result<u64>;
+
     fn from_reader<R: Read, V: Decompress>(&self, reader: R) -> Result<V>
     where
         Self: Sized;

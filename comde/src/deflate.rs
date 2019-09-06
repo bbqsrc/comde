@@ -19,6 +19,11 @@ impl Decompressor for DeflateDecompressor {
         DeflateDecompressor
     }
 
+    fn copy<R: Read, W: Write>(&self, source: R, mut dest: W) -> Result<u64> {
+        let mut decoder = DeflateDecoder::new(source);
+        std::io::copy(&mut decoder, &mut dest)
+    }
+
     fn from_reader<R: Read, V: Decompress>(&self, reader: R) -> Result<V>
     where
         Self: Sized,
