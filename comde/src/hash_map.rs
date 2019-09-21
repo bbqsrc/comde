@@ -19,6 +19,22 @@ where
     __value: std::marker::PhantomData<V>,
 }
 
+impl<K: Hash + Eq, V, C, D> Default for CompressedHashMap<K, V, RandomState, C, D>
+where
+    V: Compress + Decompress,
+    C: Compressor,
+    D: Decompressor,
+{
+    fn default() -> Self {
+        CompressedHashMap {
+            map: HashMap::new(),
+            compressor: C::new(),
+            decompressor: D::new(),
+            __value: std::marker::PhantomData::<V>,
+        }
+    }
+}
+
 impl<K: Hash + Eq, V, C, D> CompressedHashMap<K, V, RandomState, C, D>
 where
     V: Compress + Decompress,
@@ -26,12 +42,7 @@ where
     D: Decompressor,
 {
     pub fn new() -> CompressedHashMap<K, V, RandomState, C, D> {
-        CompressedHashMap {
-            map: HashMap::new(),
-            compressor: C::new(),
-            decompressor: D::new(),
-            __value: std::marker::PhantomData::<V>,
-        }
+        Self::default()
     }
 
     #[inline(always)]
@@ -40,7 +51,11 @@ where
         self.map
             .insert(k, bytes)
             // This isn't actually insane.
-            .map(|x| self.decompressor.from_reader(x.to_reader()).unwrap())
+            .map(|x| {
+                self.decompressor
+                    .from_reader(std::io::Cursor::new(x))
+                    .unwrap()
+            })
     }
 
     #[inline(always)]

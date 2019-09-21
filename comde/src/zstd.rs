@@ -1,11 +1,11 @@
 use std::collections::hash_map::RandomState;
-use std::io::{Result, Seek, SeekFrom, prelude::*};
+use std::io::{prelude::*, Result, Seek, SeekFrom};
 
 use zstd::stream::read::Decoder;
 use zstd::stream::write::Encoder;
 
 use crate::hash_map::CompressedHashMap;
-use crate::{Compress, Compressor, Decompress, Decompressor, com::ByteCount};
+use crate::{com::ByteCount, Compressor, Decompress, Decompressor};
 
 pub type ZstdHashMap<K, V> = CompressedHashMap<K, V, RandomState, ZstdCompressor, ZstdDecompressor>;
 
@@ -39,11 +39,15 @@ impl Compressor for ZstdCompressor {
         ZstdCompressor
     }
 
-    fn compress<W: Write + Seek, V: Compress>(&self, mut writer: W, data: V) -> Result<ByteCount> {
+    fn compress<W: Write + Seek, R: Read>(
+        &self,
+        writer: &mut W,
+        reader: &mut R,
+    ) -> Result<ByteCount> {
         let start = writer.seek(SeekFrom::Current(0))?;
         let mut encoder = Encoder::new(writer, 21)?;
-        let read = std::io::copy(&mut data.to_reader(), &mut encoder)?;
-        let mut writer = encoder.finish()?;
+        let read = std::io::copy(reader, &mut encoder)?;
+        let writer = encoder.finish()?;
         let end = writer.seek(SeekFrom::Current(0))?;
         let write = end - start;
         Ok(ByteCount { read, write })

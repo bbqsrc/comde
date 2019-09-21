@@ -1,19 +1,25 @@
-use std::io::{Read, Result, Write, Seek};
+//! Generic data structure compression framework.
+
+use std::io::{Read, Result, Seek, Write};
 
 pub struct ByteCount {
     /// Bytes read from the reader, before being compressed.
     pub read: u64,
 
     /// Bytes written to the writer, after being compressed.
-    pub write: u64
+    pub write: u64,
 }
 
 pub trait Compressor {
     fn new() -> Self;
-    fn compress<W: Write + Seek, V: Compress>(&self, writer: W, data: V) -> Result<ByteCount>;
+    fn compress<W: Write + Seek, R: Read>(
+        &self,
+        writer: &mut W,
+        reader: &mut R,
+    ) -> Result<ByteCount>;
     fn to_vec<V: Compress>(&self, data: V) -> Result<Vec<u8>> {
         let mut writer = std::io::Cursor::new(Vec::with_capacity(128));
-        self.compress(&mut writer, data)?;
+        self.compress(&mut writer, &mut data.to_reader())?;
         Ok(writer.into_inner())
     }
 }
@@ -46,12 +52,3 @@ impl<'a> Compress for &'a Vec<u8> {
         std::io::Cursor::new(self)
     }
 }
-
-impl Compress for std::fs::File {
-    type Reader = std::fs::File;
-
-    fn to_reader(self) -> Self::Reader {
-        self
-    }
-}
-

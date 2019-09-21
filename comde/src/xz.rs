@@ -4,7 +4,7 @@ use std::io::{prelude::*, Result, Seek, SeekFrom};
 use xz2::{read::XzDecoder, write::XzEncoder};
 
 use crate::hash_map::CompressedHashMap;
-use crate::{Compress, Compressor, Decompress, Decompressor, com::ByteCount};
+use crate::{com::ByteCount, Compressor, Decompress, Decompressor};
 
 #[cfg(feature = "with-phf")]
 use crate::phf::CompressedPhfMap;
@@ -44,12 +44,19 @@ impl Compressor for XzCompressor {
         XzCompressor
     }
 
-    fn compress<W: Write + Seek, V: Compress>(&self, mut writer: W, data: V) -> Result<ByteCount> {
+    fn compress<W: Write + Seek, R: Read>(
+        &self,
+        writer: &mut W,
+        reader: &mut R,
+    ) -> Result<ByteCount> {
         let start = writer.seek(SeekFrom::Current(0))?;
         let mut encoder = XzEncoder::new(writer, 9);
-        let read = std::io::copy(&mut data.to_reader(), &mut encoder)?;
+        let read = std::io::copy(reader, &mut encoder)?;
         let end = encoder.finish()?.seek(SeekFrom::Current(0))?;
-        Ok(ByteCount { read, write: end - start })
+        Ok(ByteCount {
+            read,
+            write: end - start,
+        })
     }
 }
 

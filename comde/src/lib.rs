@@ -1,3 +1,6 @@
+//! # Comde
+//! Comde is a framework for _com_pressing and _de_compressing.
+
 pub mod com;
 pub mod de;
 pub mod hash_map;

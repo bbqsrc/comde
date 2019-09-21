@@ -1,5 +1,5 @@
+use crate::{com::ByteCount, Compressor, Decompress, Decompressor};
 use std::io::{prelude::*, Result, Seek};
-use crate::{Compress, Compressor, Decompress, Decompressor, com::ByteCount};
 
 #[derive(Debug, Copy, Clone)]
 pub struct StoredDecompressor;
@@ -29,8 +29,12 @@ impl Compressor for StoredCompressor {
         StoredCompressor
     }
 
-    fn compress<W: Write + Seek, V: Compress>(&self, mut writer: W, data: V) -> Result<ByteCount> {
-        let read = std::io::copy(&mut data.to_reader(), &mut writer)?;
+    fn compress<W: Write + Seek, R: Read>(
+        &self,
+        writer: &mut W,
+        reader: &mut R,
+    ) -> Result<ByteCount> {
+        let read = std::io::copy(reader, writer)?;
         Ok(ByteCount { read, write: read })
     }
 }
@@ -41,7 +45,8 @@ mod tests {
     use crate::hash_map::CompressedHashMap;
     use std::collections::hash_map::RandomState;
 
-    type PassthroughHashMap<K, V> = CompressedHashMap<K, V, RandomState, StoredCompressor, StoredDecompressor>;
+    type PassthroughHashMap<K, V> =
+        CompressedHashMap<K, V, RandomState, StoredCompressor, StoredDecompressor>;
 
     #[test]
     fn basic() {

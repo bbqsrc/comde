@@ -1,4 +1,6 @@
-use std::io::{Read, Write, Result};
+//! Generic data structure decompression framework.
+
+use std::io::{Read, Result, Write};
 
 pub trait Decompressor {
     fn new() -> Self;

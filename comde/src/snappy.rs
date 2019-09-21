@@ -2,7 +2,7 @@ use std::collections::hash_map::RandomState;
 use std::io::{prelude::*, Result, Seek, SeekFrom};
 
 use crate::hash_map::CompressedHashMap;
-use crate::{Compress, Compressor, Decompress, Decompressor, com::ByteCount};
+use crate::{com::ByteCount, Compressor, Decompress, Decompressor};
 
 pub type SnappyHashMap<K, V> =
     CompressedHashMap<K, V, RandomState, SnappyCompressor, SnappyDecompressor>;
@@ -37,13 +37,25 @@ impl Compressor for SnappyCompressor {
         SnappyCompressor
     }
 
-    fn compress<W: Write + Seek, V: Compress>(&self, mut writer: W, data: V) -> Result<ByteCount> {
+    fn compress<W: Write + Seek, R: Read>(
+        &self,
+        writer: &mut W,
+        reader: &mut R,
+    ) -> Result<ByteCount> {
         let start = writer.seek(SeekFrom::Current(0))?;
         let mut encoder = snap::Writer::new(writer);
-        let read = std::io::copy(&mut data.to_reader(), &mut encoder)?;
-        let mut writer = encoder.into_inner().map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "failed to get writer out of encoder"))?;
+        let read = std::io::copy(reader, &mut encoder)?;
+        let writer = encoder.into_inner().map_err(|_| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "failed to get writer out of encoder",
+            )
+        })?;
         let end = writer.seek(SeekFrom::Current(0))?;
-        Ok(ByteCount { read, write: end - start })
+        Ok(ByteCount {
+            read,
+            write: end - start,
+        })
     }
 }
 
