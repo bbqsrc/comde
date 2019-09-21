@@ -4,6 +4,9 @@ pub mod hash_map;
 
 pub mod stored;
 
+#[cfg(feature = "brotli")]
+pub mod brotli;
+
 #[cfg(feature = "xz")]
 pub mod xz;
 
@@ -19,6 +22,6 @@ pub mod zstd;
 #[cfg(feature = "with-phf")]
 pub mod phf;
 
-pub use com::{Compress, Compressor, ByteCount};
+pub use com::{ByteCount, Compress, Compressor};
 pub use de::{Decompress, Decompressor};
 pub use hash_map::CompressedHashMap;
