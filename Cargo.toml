@@ -1,5 +1,4 @@
 [workspace]
 members = [
     "comde",
-    "comde_codegen"
 ]

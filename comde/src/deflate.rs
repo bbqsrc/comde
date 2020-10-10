@@ -1,15 +1,10 @@
-use std::collections::hash_map::RandomState;
 use std::io::{prelude::*, Result, Seek, SeekFrom};
 
-use crate::hash_map::CompressedHashMap;
 use crate::{com::ByteCount, Compressor, Decompress, Decompressor};
 
 use flate2::read::DeflateDecoder;
 use flate2::write::DeflateEncoder;
 use flate2::Compression;
-
-pub type DeflateHashMap<K, V> =
-    CompressedHashMap<K, V, RandomState, DeflateCompressor, DeflateDecompressor>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct DeflateDecompressor;
@@ -54,18 +49,5 @@ impl Compressor for DeflateCompressor {
             read,
             write: end - start,
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn basic() {
-        let mut map = DeflateHashMap::<String, String>::new();
-        map.insert("foo".into(), "bar".into());
-        assert_eq!("bar".to_string(), map.get("foo").unwrap());
-        assert_ne!("bap".to_string(), map.get("foo").unwrap());
     }
 }

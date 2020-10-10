@@ -1,30 +1,29 @@
 //! # Comde
-//! Comde is a framework for _com_pressing and _de_compressing.
+//!
+//! Comde is a framework for __com__pressing and __de__compressing.
+
+#![feature(min_const_generics)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod com;
 pub mod de;
-pub mod hash_map;
 
 pub mod stored;
 
-#[cfg(feature = "brotli")]
+#[cfg(all(feature = "std", feature = "brotli"))]
 pub mod brotli;
 
-#[cfg(feature = "xz")]
+#[cfg(all(feature = "std", feature = "xz"))]
 pub mod xz;
 
-#[cfg(feature = "snappy")]
+#[cfg(all(feature = "std", feature = "snappy"))]
 pub mod snappy;
 
-#[cfg(feature = "deflate")]
+#[cfg(all(feature = "std", feature = "deflate"))]
 pub mod deflate;
 
 #[cfg(feature = "zstandard")]
 pub mod zstd;
 
-#[cfg(feature = "with-phf")]
-pub mod phf;
-
 pub use com::{ByteCount, Compress, Compressor};
 pub use de::{Decompress, Decompressor};
-pub use hash_map::CompressedHashMap;

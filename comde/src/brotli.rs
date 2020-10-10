@@ -1,12 +1,6 @@
-use std::collections::hash_map::RandomState;
 use std::io::{prelude::*, Result, Seek, SeekFrom};
 
-use crate::hash_map::CompressedHashMap;
 use crate::{com::ByteCount, Compressor, Decompress, Decompressor};
-
-pub type BrotliHashMap<K, V> =
-    CompressedHashMap<K, V, RandomState, BrotliCompressor, BrotliDecompressor>;
-
 #[derive(Debug, Copy, Clone)]
 pub struct BrotliDecompressor;
 
@@ -51,18 +45,5 @@ impl Compressor for BrotliCompressor {
             read,
             write: end - start,
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn basic() {
-        let mut map = BrotliHashMap::<String, String>::new();
-        map.insert("foo".into(), "bar".into());
-        assert_eq!("bar".to_string(), map.get("foo").unwrap());
-        assert_ne!("bap".to_string(), map.get("foo").unwrap());
     }
 }
