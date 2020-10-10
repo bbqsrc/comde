@@ -1,4 +1,25 @@
-[workspace]
-members = [
-    "comde",
-]
+[package]
+name = "comde"
+version = "0.2.0-pre.1"
+authors = ["Brendan Molloy <brendan@bbqsrc.net>"]
+description = "Compression/decompression akin to serde"
+edition = "2018"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/bbqsrc/comde"
+
+[dependencies]
+bare-io = { git = "http://github.com/bbqsrc/bare-io", branch = "main" }
+delegate = "0.4.3"
+brotli = { version = "3.3.0", optional = true, default-features = false }
+xz2 = { version = "0.1.6", optional = true }
+snap = { version = "1.0.1", optional = true }
+flate2 = { version = "1.0.18", optional = true }
+zstd = { git = "https://github.com/bbqsrc/zstd-rs", branch = "feature/no-std", optional = true, default-features = false }
+
+[features]
+default = ["std", "xz", "snappy", "deflate", "zstandard", "brotli"]
+xz = ["xz2"]
+snappy = ["snap"]
+deflate = ["flate2"]
+zstandard = ["zstd"]
+std = ["bare-io/std", "brotli/std", "zstd/std"]
