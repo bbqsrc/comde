@@ -1,11 +1,6 @@
-use std::collections::hash_map::RandomState;
 use std::io::{prelude::*, Result, Seek, SeekFrom};
 
-use crate::hash_map::CompressedHashMap;
 use crate::{com::ByteCount, Compressor, Decompress, Decompressor};
-
-pub type SnappyHashMap<K, V> =
-    CompressedHashMap<K, V, RandomState, SnappyCompressor, SnappyDecompressor>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct SnappyDecompressor;
@@ -16,7 +11,7 @@ impl Decompressor for SnappyDecompressor {
     }
 
     fn copy<R: Read, W: Write>(&self, source: R, mut dest: W) -> Result<u64> {
-        let mut decoder = snap::Reader::new(source);
+        let mut decoder = snap::read::FrameDecoder::new(source);
         std::io::copy(&mut decoder, &mut dest)
     }
 
@@ -24,7 +19,7 @@ impl Decompressor for SnappyDecompressor {
     where
         Self: Sized,
     {
-        let decoder = snap::Reader::new(reader);
+        let decoder = snap::read::FrameDecoder::new(reader);
         V::from_reader(decoder)
     }
 }
@@ -43,7 +38,7 @@ impl Compressor for SnappyCompressor {
         reader: &mut R,
     ) -> Result<ByteCount> {
         let start = writer.seek(SeekFrom::Current(0))?;
-        let mut encoder = snap::Writer::new(writer);
+        let mut encoder = snap::write::FrameEncoder::new(writer);
         let read = std::io::copy(reader, &mut encoder)?;
         let writer = encoder.into_inner().map_err(|_| {
             std::io::Error::new(
@@ -56,18 +51,5 @@ impl Compressor for SnappyCompressor {
             read,
             write: end - start,
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn basic() {
-        let mut map = SnappyHashMap::<String, String>::new();
-        map.insert("foo".into(), "bar".into());
-        assert_eq!("bar".to_string(), map.get("foo").unwrap());
-        assert_ne!("bap".to_string(), map.get("foo").unwrap());
     }
 }
