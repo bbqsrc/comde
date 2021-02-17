@@ -8,7 +8,7 @@ license = "Apache-2.0 OR MIT"
 repository = "https://github.com/bbqsrc/comde"
 
 [dependencies]
-bare-io = { git = "http://github.com/bbqsrc/bare-io", branch = "main" }
+bare-io = "0.2"
 delegate = "0.4.3"
 brotli = { version = "3.3.0", optional = true, default-features = false }
 xz2 = { version = "0.1.6", optional = true }
