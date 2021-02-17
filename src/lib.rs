@@ -2,7 +2,7 @@
 //!
 //! Comde is a framework for __com__pressing and __de__compressing.
 
-#![feature(min_const_generics)]
+#![cfg_attr(feature = "nightly", feature(min_const_generics))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod com;
