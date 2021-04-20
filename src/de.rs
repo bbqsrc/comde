@@ -1,6 +1,6 @@
 //! Generic data structure decompression framework.
 
-use bare_io::{Read, Result, Write};
+use std::io::{Read, Result, Write};
 
 pub trait Decompressor {
     fn new() -> Self;
@@ -11,12 +11,11 @@ pub trait Decompressor {
     where
         Self: Sized;
 
-    #[cfg(feature = "std")]
     fn from_vec<V: Decompress>(&self, bytes: Vec<u8>) -> Result<V>
     where
         Self: Sized,
     {
-        let reader = bare_io::Cursor::new(bytes);
+        let reader = std::io::Cursor::new(bytes);
         self.from_reader(reader)
     }
 }
@@ -26,12 +25,11 @@ pub trait Decompress {
     where
         Self: Sized;
 
-    #[cfg(feature = "std")]
     fn from_vec(&self, bytes: Vec<u8>) -> Result<Self>
     where
         Self: Sized,
     {
-        let reader = bare_io::Cursor::new(bytes);
+        let reader = std::io::Cursor::new(bytes);
         Self::from_reader(reader)
     }
 }

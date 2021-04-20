@@ -1,7 +1,7 @@
-use bare_io::{Read, Write, Result, Seek, SeekFrom};
+use std::io::{Read, Result, Seek, SeekFrom, Write};
 
 #[cfg(feature = "nightly")]
-use bare_io::copy;
+use std::io::copy;
 
 #[cfg(not(feature = "nightly"))]
 use std::io::copy;
@@ -18,13 +18,6 @@ impl Decompressor for XzDecompressor {
         XzDecompressor
     }
 
-    #[cfg(feature = "nightly")]
-    fn copy<R: Read, W: Write>(&self, source: R, mut dest: W) -> Result<u64> {
-        let mut decoder = XzDecoder::new(source);
-        copy::<_, _, 4096>(&mut decoder, &mut dest)
-    }
-    
-    #[cfg(not(feature = "nightly"))]
     fn copy<R: Read, W: Write>(&self, source: R, mut dest: W) -> Result<u64> {
         let mut decoder = XzDecoder::new(source);
         copy(&mut decoder, &mut dest)
@@ -47,23 +40,6 @@ impl Compressor for XzCompressor {
         XzCompressor
     }
 
-    #[cfg(feature = "nightly")]
-    fn compress<W: Write + Seek, R: Read>(
-        &self,
-        writer: &mut W,
-        reader: &mut R,
-    ) -> Result<ByteCount> {
-        let start = writer.seek(SeekFrom::Current(0))?;
-        let mut encoder = XzEncoder::new(writer, 9);
-        let read = copy::<_, _, 4096>(reader, &mut encoder)?;
-        let end = encoder.finish()?.seek(SeekFrom::Current(0))?;
-        Ok(ByteCount {
-            read,
-            write: end - start,
-        })
-    }
-
-    #[cfg(not(feature = "nightly"))]
     fn compress<W: Write + Seek, R: Read>(
         &self,
         writer: &mut W,

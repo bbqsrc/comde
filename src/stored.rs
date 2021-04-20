@@ -1,14 +1,6 @@
 use crate::{com::ByteCount, Compressor, Decompress, Decompressor};
-use bare_io::{Read, Write, Result, Seek};
-
-#[cfg(feature = "nightly")]
-use bare_io::copy;
-
-#[cfg(not(feature = "nightly"))]
 use std::io::copy;
-
-#[cfg(feature = "nightly")]
-const BUF_SIZE: usize = 8 * 1024;
+use std::io::{Read, Result, Seek, Write};
 
 #[derive(Debug, Copy, Clone)]
 pub struct StoredDecompressor;
@@ -18,12 +10,6 @@ impl Decompressor for StoredDecompressor {
         StoredDecompressor
     }
 
-    #[cfg(feature = "nightly")]
-    fn copy<R: Read, W: Write>(&self, mut source: R, mut dest: W) -> Result<u64> {
-        copy::<_, _, BUF_SIZE>(&mut source, &mut dest)
-    }
-
-    #[cfg(not(feature = "nightly"))]
     fn copy<R: Read, W: Write>(&self, mut source: R, mut dest: W) -> Result<u64> {
         copy(&mut source, &mut dest)
     }
@@ -44,17 +30,6 @@ impl Compressor for StoredCompressor {
         StoredCompressor
     }
 
-    #[cfg(feature = "nightly")]
-    fn compress<W: Write + Seek, R: Read>(
-        &self,
-        writer: &mut W,
-        reader: &mut R,
-    ) -> Result<ByteCount> {
-        let read = copy::<_, _, BUF_SIZE>(reader, writer)?;
-        Ok(ByteCount { read, write: read })
-    }
-
-    #[cfg(not(feature = "nightly"))]
     fn compress<W: Write + Seek, R: Read>(
         &self,
         writer: &mut W,
