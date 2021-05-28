@@ -34,14 +34,13 @@ pub trait Decompress {
     }
 }
 
-// #[cfg(feature = "std")]
-// impl Decompress for String {
-//     fn from_reader<R: Read>(mut reader: R) -> Result<Self>
-//     where
-//         Self: Sized,
-//     {
-//         let mut string = String::new();
-//         reader.read_to_string(&mut string)?;
-//         Ok(string)
-//     }
-// }
+impl Decompress for String {
+    fn from_reader<R: Read>(mut reader: R) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let mut string = String::new();
+        reader.read_to_string(&mut string)?;
+        Ok(string)
+    }
+}
